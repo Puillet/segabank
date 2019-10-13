@@ -35,9 +35,4 @@ public class CompteSimple extends Compte  {
     public void setIdCompte(int idCompte) {
         this.idCompte = idCompte;
     }
-
-    @Override
-    public void retirerArgent(double solde) {
-        super.retirerArgent(solde);
-    }
 }

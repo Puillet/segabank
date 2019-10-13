@@ -4,17 +4,17 @@ import compte.CompteEpargne;
 import compte.ComptePayant;
 import compte.CompteSimple;
 import jdbc.dal.*;
+import operation.Operation;
 
 import java.io.IOException;
 import java.sql.*;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import java.util.*;
 
 public class index {
 
     private static Scanner sc = new Scanner(System.in);
 
-    private static IDAO<Long, Compte> compteDAO = new CompteDAO();
+    private static IDAO<Integer, Compte> compteDAO = new CompteDAO();
     private static IDAO<Long, Agence> agenceDAO = new AgenceDAO();
     private static IDAO<Long, CompteSimple> compteSimpleDAO = new CompteSimpleDAO();
     private static IDAO<Long, CompteEpargne> compteEpargneDAO = new CompteEpargneDAO();
@@ -25,7 +25,7 @@ public class index {
         menu();
     }
 
-    private static void menu(){
+    private static void menu() throws SQLException, IOException, ClassNotFoundException {
         int response;
         boolean first = true;
         do {
@@ -42,7 +42,7 @@ public class index {
             System.out.println( "5 - Supprimer un compte" );
             System.out.println( "6 - Liste des agences" );
             System.out.println( "7 - Liste des comptes" );
-            System.out.println( "9 - Quitter" );
+            System.out.println( "8 - Quitter" );
             System.out.print( "Entrez votre choix : " );
             try {
                 response = sc.nextInt();
@@ -56,19 +56,19 @@ public class index {
 
         switch ( response ) {
             case 1:
-                //createContact();
+                retrait();
                 break;
             case 2:
-                //updateContact();
+                depot();
                 break;
             case 3:
                 compteMenu();
                 break;
             case 4:
-                //dspContacts( true );
+                updateCompte();
                 break;
             case 5:
-                //storeCurrentBook();
+                deleteCompte();
                 break;
             case 6:
                 listAgence();
@@ -77,15 +77,12 @@ public class index {
                 listCompte();
                 break;
             case 8:
-                //sortContacts(false);
-                break;
-            case 9:
                 System.exit(1);
                 break;
         }
     }
 
-    private static void compteMenu(){
+    private static void compteMenu() throws SQLException, IOException, ClassNotFoundException {
         int response;
         boolean first = true;
         do {
@@ -123,6 +120,42 @@ public class index {
             case 4:
                 menu();
                 break;
+        }
+    }
+
+    private static void retrait(){
+        System.out.println("RETRAIT");
+        System.out.println("Choisissez le compte:");
+
+        try{
+            listCompte();
+            int choix = sc.nextInt();
+            Compte compte = compteDAO.findById(choix);
+            double montant = sc.nextDouble();
+            compte.retirerArgent(montant);
+            compteDAO.update(compte);
+            Operation operation = new Operation(montant, compte.getId(), Operation.Transaction.valueOf("R"));
+        } catch (IOException | SQLException | ClassNotFoundException e){
+            System.out.println("Aucun compte ne correspond");
+        }
+    }
+
+    private static void depot() {
+        System.out.println("DEPOT");
+        System.out.println("Choisissez le compte:");
+
+        try {
+            listCompte();
+            int choix = sc.nextInt();
+            Compte compte = compteDAO.findById(choix);
+            double montant = sc.nextDouble();
+            compte.ajouterArgent(montant);
+            compteDAO.update(compte);
+            Operation operation = new Operation(montant, compte.getId(), Operation.Transaction.valueOf("D"));
+        } catch (NullPointerException ex){
+            System.out.println("Compte Inexistant");
+        } catch (IOException | SQLException | ClassNotFoundException e){
+            System.out.println("Aucun compte ne correspond");
         }
     }
 
@@ -211,6 +244,69 @@ public class index {
 
     }
 
+    public static void updateCompte() throws SQLException, IOException, ClassNotFoundException {
+        listCompte();
+        int reponse;
+        List<Integer> ids = new ArrayList<>();
+        for(Compte item : compteDAO.findAll()){
+            ids.add(item.getId());
+        }
+        boolean first = true;
+        do {
+            if (!first){
+                System.out.println("Compte Introuvable. Réessayez");
+            }
+            System.out.println("Choisir un compte sur " + compteDAO.findAll().size());
+            try {
+                reponse = sc.nextInt();
+            }catch (InputMismatchException e) {
+                reponse = -1;
+            }finally {
+                sc.nextLine();
+            }
+            first = false;
+        }while (reponse < 0 || reponse > Collections.max(ids));
+        try {
+            Compte compte = compteDAO.findById(reponse);
+            System.out.println("Entrez un solde :");
+            compte.setSolde(sc.nextInt());
+            listAgence();
+            System.out.println("Entrez le numéro d'une agence : ");
+            listAgence();
+            compte.setIdAgence(sc.nextInt());
+            System.out.println("Enregistrement avec succes");
+            compteDAO.update(compte);
+        } catch(IOException e){
+            System.out.println("Erreur pendant l'enregistrement.");
+        }
+    }
+
+    private static void deleteCompte() throws SQLException, IOException, ClassNotFoundException {
+        listCompte();
+        int reponse;
+        List<Integer> ids = new ArrayList<>();
+        for(Compte item : compteDAO.findAll()){
+            ids.add(item.getId());
+        }
+        //int size = dao.count;
+        boolean first = true;
+        do {
+            if (!first){
+                System.out.println("Mauvais choix. Merci de recommencer");
+            }
+            try {
+                reponse = sc.nextInt();
+            }catch (InputMismatchException e) {
+                reponse = -1;
+            }finally {
+                sc.nextLine();
+            }
+            first = false;
+        }while (reponse < 0 || reponse > Collections.max(ids));
+        System.out.println("Compte supprimé");
+        compteDAO.remove(compteDAO.findById(reponse));
+    }
+
     private static void listAgence(){
         try {
             for(Agence item : agenceDAO.findAll()){
@@ -229,7 +325,7 @@ public class index {
                 System.out.println("\n Solde : " + item.getSolde());
             }
         } catch (SQLException | IOException | ClassNotFoundException e) {
-            System.out.println("[ERREUR] : Aucune agence trouvée");
+            System.out.println("[ERREUR] : Aucune compte trouvé");
         }
     }
 }

@@ -37,16 +37,4 @@ public class ComptePayant extends Compte  {
     public void setPourcentageInteret(double pourcentageInteret) {
         this.pourcentageInteret = pourcentageInteret;
     }
-
-    @Override
-    public void ajouterArgent(double solde) {
-        double interet = pourcentageInteret*solde/100;
-        super.ajouterArgent(solde - interet);
-    }
-
-    @Override
-    public void retirerArgent(double solde) {
-        double interet = pourcentageInteret*solde/100;
-        super.retirerArgent(solde + interet);
-    }
 }

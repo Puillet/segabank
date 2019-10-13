@@ -4,10 +4,7 @@ import agence.Agence;
 import jdbc.PersistenceManager;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +37,7 @@ public class AgenceDAO implements IDAO<Long, Agence> {
         List<Agence> list = new ArrayList<>();
         Connection connection = PersistenceManager.getConnection();
         if ( connection != null ) {
-            try ( PreparedStatement ps = connection.prepareStatement( FIND_ALL_QUERY ) ) {
+            try ( PreparedStatement ps = connection.prepareStatement( FIND_ALL_QUERY, Statement.RETURN_GENERATED_KEYS ) ) {
                 try ( ResultSet rs = ps.executeQuery() ) {
                     while ( rs.next() ) {
                         Agence agence = new Agence();
