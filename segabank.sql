@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1:3306
--- Généré le :  Dim 13 oct. 2019 à 17:20
+-- Généré le :  Dim 13 oct. 2019 à 21:38
 -- Version du serveur :  5.7.23
 -- Version de PHP :  7.2.10
 
@@ -67,13 +67,12 @@ CREATE TABLE IF NOT EXISTS `compte` (
 INSERT INTO `compte` (`id`, `solde`, `idAgence`) VALUES
 (2, 1521, 3),
 (3, 10, 2),
-(4, 155555, 1),
-(5, 520, 1),
+(4, 150000, 1),
+(5, 500, 1),
 (6, 45522, 1),
 (7, 520, 1),
 (8, 152, 1),
-(9, 51565, 1),
-(10, 5664, 1);
+(9, 51535, 1);
 
 -- --------------------------------------------------------
 
@@ -87,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `compteepargne` (
   `idCompte` int(11) NOT NULL,
   `tauxInteret` double NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `idCompte` (`idCompte`)
+  KEY `compteepargne_ibfk_1` (`idCompte`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
 --
@@ -110,7 +109,7 @@ CREATE TABLE IF NOT EXISTS `comptepayant` (
   `idCompte` int(11) NOT NULL,
   `tauxRetrait` double NOT NULL DEFAULT '5',
   PRIMARY KEY (`id`),
-  KEY `idCompte` (`idCompte`)
+  KEY `comptepayant_ibfk_1` (`idCompte`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
 --
@@ -118,8 +117,7 @@ CREATE TABLE IF NOT EXISTS `comptepayant` (
 --
 
 INSERT INTO `comptepayant` (`id`, `idCompte`, `tauxRetrait`) VALUES
-(1, 3, 5),
-(3, 10, 5);
+(1, 3, 5);
 
 -- --------------------------------------------------------
 
@@ -153,10 +151,18 @@ DROP TABLE IF EXISTS `operation`;
 CREATE TABLE IF NOT EXISTS `operation` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `montant` double NOT NULL,
-  `typeTransaction` enum('depot','retrait') NOT NULL,
+  `transaction` enum('D','R') NOT NULL,
   `idCompte` int(11) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+  PRIMARY KEY (`id`),
+  KEY `idCompte` (`idCompte`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+
+--
+-- Déchargement des données de la table `operation`
+--
+
+INSERT INTO `operation` (`id`, `montant`, `transaction`, `idCompte`) VALUES
+(1, 500, 'R', 4);
 
 --
 -- Contraintes pour les tables déchargées
@@ -166,25 +172,31 @@ CREATE TABLE IF NOT EXISTS `operation` (
 -- Contraintes pour la table `compte`
 --
 ALTER TABLE `compte`
-  ADD CONSTRAINT `compte_ibfk_1` FOREIGN KEY (`idAgence`) REFERENCES `agence` (`id`);
+  ADD CONSTRAINT `compte_ibfk_1` FOREIGN KEY (`idAgence`) REFERENCES `agence` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `compteepargne`
 --
 ALTER TABLE `compteepargne`
-  ADD CONSTRAINT `compteepargne_ibfk_1` FOREIGN KEY (`idCompte`) REFERENCES `compte` (`id`);
+  ADD CONSTRAINT `compteepargne_ibfk_1` FOREIGN KEY (`idCompte`) REFERENCES `compte` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `comptepayant`
 --
 ALTER TABLE `comptepayant`
-  ADD CONSTRAINT `comptepayant_ibfk_1` FOREIGN KEY (`idCompte`) REFERENCES `compte` (`id`);
+  ADD CONSTRAINT `comptepayant_ibfk_1` FOREIGN KEY (`idCompte`) REFERENCES `compte` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `comptesimple`
 --
 ALTER TABLE `comptesimple`
   ADD CONSTRAINT `comptesimple_ibfk_1` FOREIGN KEY (`idCompte`) REFERENCES `compte` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `operation`
+--
+ALTER TABLE `operation`
+  ADD CONSTRAINT `operation_ibfk_1` FOREIGN KEY (`idCompte`) REFERENCES `compte` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
