@@ -4,13 +4,8 @@ public class Operation {
 
     private int id;
     private double montant;
-    private int idCompte;
-    private int idAgence;
     private Transaction transaction;
-
-    public Operation() {
-
-    }
+    private int idCompte;
 
 
     public enum Transaction{
@@ -38,22 +33,22 @@ public class Operation {
             }
             return null;
         }
-
-
     }
 
-    public Operation(double montant, int idAgence, Transaction transaction) {
+    public Operation() {
+    }
+
+    public Operation(double montant, Transaction transaction, int idCompte) {
         this.montant = montant;
-        this.idAgence = idAgence;
         this.transaction = transaction;
+        this.idCompte = idCompte;
     }
 
-    public Operation(int id, double montant, int idCompte, int idAgence, Transaction transaction) {
+    public Operation(int id, double montant, Transaction transaction, int idCompte) {
         this.id = id;
         this.montant = montant;
-        this.idCompte = idCompte;
-        this.idAgence = idAgence;
         this.transaction = transaction;
+        this.idCompte = idCompte;
     }
 
     public int getId() {
@@ -80,19 +75,13 @@ public class Operation {
         this.idCompte = idCompte;
     }
 
-    public int getIdAgence() {
-        return idAgence;
-    }
-
-    public void setIdAgence(int idAgence) {
-        this.idAgence = idAgence;
-    }
-
     public Transaction getTransaction() {
         return transaction;
     }
 
-    public void setTransaction(Transaction transaction) {
-        this.transaction = transaction;
+    public void setTransaction(Transaction Transaction) {
+        this.transaction = Transaction;
     }
+
+
 }

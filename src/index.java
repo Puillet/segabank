@@ -6,7 +6,10 @@ import compte.CompteSimple;
 import jdbc.dal.*;
 import operation.Operation;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.sql.*;
 import java.util.*;
 
@@ -19,7 +22,9 @@ public class index {
     private static IDAO<Long, CompteSimple> compteSimpleDAO = new CompteSimpleDAO();
     private static IDAO<Long, CompteEpargne> compteEpargneDAO = new CompteEpargneDAO();
     private static IDAO<Long, ComptePayant> comptePayantDAO = new ComptePayantDAO();
+    private static IDAO<Long, Operation> operationDAO = new OperationDAO();
 
+    private static final String CSV_SEPARATOR = ",";
 
     public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException{
         menu();
@@ -42,7 +47,8 @@ public class index {
             System.out.println( "5 - Supprimer un compte" );
             System.out.println( "6 - Liste des agences" );
             System.out.println( "7 - Liste des comptes" );
-            System.out.println( "8 - Quitter" );
+            System.out.println( "8 - Création fichier CSV");
+            System.out.println( "9 - Quitter" );
             System.out.print( "Entrez votre choix : " );
             try {
                 response = sc.nextInt();
@@ -77,8 +83,12 @@ public class index {
                 listCompte();
                 break;
             case 8:
+                csv();
+                break;
+            case 9:
                 System.exit(1);
                 break;
+
         }
     }
 
@@ -124,39 +134,59 @@ public class index {
     }
 
     private static void retrait(){
-        System.out.println("RETRAIT");
-        System.out.println("Choisissez le compte:");
-
-        try{
-            listCompte();
-            int choix = sc.nextInt();
-            Compte compte = compteDAO.findById(choix);
-            double montant = sc.nextDouble();
-            compte.retirerArgent(montant);
-            compteDAO.update(compte);
-            Operation operation = new Operation(montant, compte.getId(), Operation.Transaction.valueOf("R"));
-        } catch (IOException | SQLException | ClassNotFoundException e){
-            System.out.println("Aucun compte ne correspond");
-        }
-    }
-
-    private static void depot() {
-        System.out.println("DEPOT");
-        System.out.println("Choisissez le compte:");
+        System.out.println("Vous effectuez un retrait : ");
+        System.out.println("Choisissez votre compte  :");
 
         try {
             listCompte();
             int choix = sc.nextInt();
-            Compte compte = compteDAO.findById(choix);
+            Compte compteById = compteDAO.findById(choix);
+            System.out.println("Entrez le montant de votre retrait : ");
             double montant = sc.nextDouble();
-            compte.ajouterArgent(montant);
-            compteDAO.update(compte);
-            Operation operation = new Operation(montant, compte.getId(), Operation.Transaction.valueOf("D"));
+            compteById.retirerArgent(montant);
+            compteDAO.update(compteById);
+            //Le retrait s'effectue mais l'opération ne s'insère pas dans la table Opération
+            Compte compte = new Compte(choix);
+            compte.setId(choix);
+            Operation ope = new Operation(montant, Operation.Transaction.valueOf("R"), compte.getId());
+            operationDAO.create(ope);
+            System.out.println("Opération Effectuée");
         } catch (NullPointerException ex){
-            System.out.println("Compte Inexistant");
-        } catch (IOException | SQLException | ClassNotFoundException e){
-            System.out.println("Aucun compte ne correspond");
+            System.out.println("Ce compte n'existe pas");
+        } catch (InputMismatchException ex){
+            System.out.println("Veuillez entrer une valeur valide");
+        } catch (IOException | SQLException | ClassNotFoundException e) {
+            System.out.println("Retrait Effectué");
         }
+
+    }
+
+    private static void depot() {
+        System.out.println("Vous effectuez un depot : ");
+        System.out.println("Choisissez votre compte  :");
+
+        try {
+            listCompte();
+            int choix = sc.nextInt();
+            Compte compteById = compteDAO.findById(choix);
+            System.out.println("Entrez le montant de votre depot : ");
+            double montant = sc.nextDouble();
+            compteById.ajouterArgent(montant);
+            compteDAO.update(compteById);
+            //Le depot s'effectue mais l'opération ne s'insère pas dans la table Opération
+            Compte compte = new Compte(choix);
+            compte.setId(choix);
+            Operation ope = new Operation(montant, Operation.Transaction.valueOf("D"), compte.getId());
+            operationDAO.create(ope);
+            System.out.println("Opération Effectuée");
+        } catch (NullPointerException ex){
+            System.out.println("Ce compte n'existe pas");
+        } catch (InputMismatchException ex){
+            System.out.println("Veuillez entrer une valeur valide");
+        } catch (IOException | SQLException | ClassNotFoundException e) {
+            System.out.println("Depot Effectué");
+        }
+
     }
 
     private static void createCompteSimple(){
@@ -270,7 +300,6 @@ public class index {
             Compte compte = compteDAO.findById(reponse);
             System.out.println("Entrez un solde :");
             compte.setSolde(sc.nextInt());
-            listAgence();
             System.out.println("Entrez le numéro d'une agence : ");
             listAgence();
             compte.setIdAgence(sc.nextInt());
@@ -326,6 +355,30 @@ public class index {
             }
         } catch (SQLException | IOException | ClassNotFoundException e) {
             System.out.println("[ERREUR] : Aucune compte trouvé");
+        }
+    }
+
+    //Exporter en CSV
+    private static void csv(){
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("./resources/operationsHistory.csv")))){
+            for (Operation item : operationDAO.findAll()){
+                StringBuffer line = new StringBuffer();
+                line.append(item.getId());
+                line.append(CSV_SEPARATOR);
+                line.append(item.getMontant());
+                line.append(CSV_SEPARATOR);
+                line.append(item.getTransaction());
+                line.append(CSV_SEPARATOR);
+                line.append(item.getIdCompte());
+                bw.write(line.toString());
+                bw.newLine();
+
+                System.out.println("Fichier CSV correctement exporté");
+            }
+            bw.flush();
+        } catch (IOException | SQLException | ClassNotFoundException e) {
+            System.out.println("Erreur pendant l'exportation.");
+            System.out.println(e.getMessage());
         }
     }
 }

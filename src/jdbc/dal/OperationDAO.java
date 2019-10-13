@@ -11,7 +11,7 @@ import java.util.List;
 public class OperationDAO implements IDAO<Long, Operation> {
 
     private static final String FIND_ALL_QUERY = "SELECT * FROM operation";
-    private static final String INSERT_QUERY ="INSERT INTO operation(montant,transaction,idCompte) VALUES(?,?,?)";
+    private static final String INSERT_QUERY ="INSERT INTO operation(montant, transaction, idCompte ) VALUES(?,?,?)";
 
     @Override
     public void create(Operation operation) throws SQLException, IOException, ClassNotFoundException {
@@ -20,7 +20,7 @@ public class OperationDAO implements IDAO<Long, Operation> {
             try ( PreparedStatement ps = connection
                     .prepareStatement( INSERT_QUERY, Statement.RETURN_GENERATED_KEYS ) ) {
                 ps.setDouble( 1, operation.getMontant() );
-                ps.setObject( 2, operation.getTransaction() );
+                ps.setObject( 2, operation.getTransaction());
                 ps.setInt(3, operation.getIdCompte());
                 ps.executeUpdate();
                 try ( ResultSet rs = ps.getGeneratedKeys() ) {
@@ -57,7 +57,7 @@ public class OperationDAO implements IDAO<Long, Operation> {
 
                 while(rs.next()){
 
-                    Operation operation = new Operation(rs.getDouble("montant"), rs.getInt("idCompte"), Operation.Transaction.fromString(rs.getString("transaction")) );
+                    Operation operation = new Operation(rs.getDouble("montant"), Operation.Transaction.fromString(rs.getString("transaction")),rs.getInt("idCompte"));
                     liste.add(operation);
                 }
             }

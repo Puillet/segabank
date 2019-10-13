@@ -10,7 +10,11 @@ public class Compte implements Serializable {
 
     public Compte(){}
 
-    public Compte(int id, double solde,int idAgence) {
+    public Compte(int id) {
+        this.id = id;
+    }
+
+    public Compte(int id, double solde, int idAgence) {
         this.id = id;
         this.solde = solde;
         this.idAgence = idAgence;
@@ -48,11 +52,13 @@ public class Compte implements Serializable {
         this.solde += solde;
     }
 
-    public void retirerArgent(double solde){
-        if (this.solde - solde >= 0) {
-            this.solde -= solde;
+    public double retirerArgent(double montant){
+        if(this.getSolde() - montant > 0){
+            this.setSolde(this.solde - montant);
         }
+        return this.getSolde();
     }
+
 
     @Override
     public String toString() {
